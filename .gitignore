@@ -1,0 +1,29 @@
+# Node / AppKit
+node_modules/
+dist/
+build/
+.vite/
+*.log
+npm-debug.log*
+
+# Env / secrets — NEVER commit
+.env
+.env.*
+*.pem
+.databrickscfg
+
+# Databricks
+.databricks/
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Test artifacts
+playwright-report/
+test-results/
