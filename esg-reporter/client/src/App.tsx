@@ -8,81 +8,113 @@ import {
   Button,
   useIsMobile,
 } from '@databricks/appkit-ui/react';
-import { Menu } from 'lucide-react';
+import { Menu, BarChart3, Upload, MessageSquare, FileText } from 'lucide-react';
 import { DashboardPage } from './pages/esg/DashboardPage';
 import { IngestionPage } from './pages/esg/IngestionPage';
 import { AssistantPage } from './pages/esg/AssistantPage';
 import { ReportPage } from './pages/esg/ReportPage';
 
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-    isActive
-      ? 'bg-primary text-primary-foreground'
-      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+const NAV = [
+  { to: '/', label: 'Dashboard', icon: BarChart3, end: true },
+  { to: '/ingest', label: 'Data Ingestion', icon: Upload, end: false },
+  { to: '/assistant', label: 'ESG Assistant', icon: MessageSquare, end: false },
+  { to: '/report', label: 'CSR Report', icon: FileText, end: false },
+];
+
+const navCls = ({ isActive }: { isActive: boolean }) =>
+  `flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+    isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
   }`;
 
-const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-    isActive
-      ? 'bg-primary text-primary-foreground'
-      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+const mobileNavCls = ({ isActive }: { isActive: boolean }) =>
+  `flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+    isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
   }`;
 
-type NavLinkClassFn = (props: { isActive: boolean }) => string;
+type NLFn = (p: { isActive: boolean }) => string;
 
-function NavLinks({ className, linkClass, onClick }: { className?: string; linkClass: NavLinkClassFn; onClick?: () => void }) {
+function NavLinks({ mobile, onClick }: { mobile?: boolean; onClick?: () => void }) {
+  const cls: NLFn = mobile ? mobileNavCls : navCls;
   return (
-    <nav className={className}>
-      <NavLink to="/" end className={linkClass} onClick={onClick}>Dashboard</NavLink>
-      <NavLink to="/ingest" className={linkClass} onClick={onClick}>Data Ingestion</NavLink>
-      <NavLink to="/assistant" className={linkClass} onClick={onClick}>ESG Assistant</NavLink>
-      <NavLink to="/report" className={linkClass} onClick={onClick}>CSR Report</NavLink>
+    <nav className={mobile ? 'flex flex-col gap-1' : 'flex gap-1'}>
+      {NAV.map(({ to, label, icon: Icon, end }) => (
+        <NavLink key={to} to={to} end={end} className={cls} onClick={onClick}>
+          <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+          {label}
+        </NavLink>
+      ))}
     </nav>
   );
 }
 
 function Layout() {
   const isMobile = useIsMobile();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isMobile) setMobileNavOpen(false);
-  }, [isMobile]);
+  const [open, setOpen] = useState(false);
+  useEffect(() => { if (!isMobile) setOpen(false); }, [isMobile]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b px-4 md:px-6 py-3 flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-emerald-600 flex items-center justify-center">
-            <span className="text-white text-xs font-bold">ESG</span>
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center gap-4 px-4 md:px-6">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <div className="h-7 w-7 rounded-md bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center shadow-sm">
+              <span className="text-white text-[10px] font-black tracking-tight">ESG</span>
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="font-bold text-sm tracking-tight">Carbon Reporter</span>
+              <span className="text-[9px] text-muted-foreground uppercase tracking-widest">by Databricks</span>
+            </div>
           </div>
-          <h1 className="text-lg font-semibold text-foreground">Carbon Reporter</h1>
-        </div>
-        <NavLinks className="hidden md:flex gap-1 ml-4" linkClass={navLinkClass} />
-        <div className="ml-auto md:hidden">
-          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-            <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(true)}>
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Open navigation</span>
-            </Button>
-            <SheetContent side="left">
-              <SheetHeader>
-                <SheetTitle>Navigation</SheetTitle>
-              </SheetHeader>
-              <NavLinks className="flex flex-col gap-1 mt-4" linkClass={mobileNavLinkClass} onClick={() => setMobileNavOpen(false)} />
-            </SheetContent>
-          </Sheet>
-        </div>
-        <div className="hidden md:flex ml-auto items-center gap-2">
-          <span className="text-xs text-muted-foreground px-2 py-1 rounded-full border">
-            Databricks Apps · Lakebase · Agent Bricks
-          </span>
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex ml-4">
+            <NavLinks />
+          </div>
+
+          {/* Right side */}
+          <div className="ml-auto flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-1.5 text-[10px] text-muted-foreground border rounded-full px-2.5 py-1 bg-muted/30">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span>Lakebase</span>
+              <span className="text-muted-foreground/50">·</span>
+              <span>Agent Bricks</span>
+              <span className="text-muted-foreground/50">·</span>
+              <span>Databricks Apps</span>
+            </div>
+            {/* Mobile hamburger */}
+            <div className="md:hidden">
+              <Sheet open={open} onOpenChange={setOpen}>
+                <Button variant="ghost" size="icon" onClick={() => setOpen(true)}>
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Menu</span>
+                </Button>
+                <SheetContent side="left" className="w-64">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2 text-sm">
+                      <div className="h-5 w-5 rounded bg-emerald-600 flex items-center justify-center">
+                        <span className="text-white text-[8px] font-black">ESG</span>
+                      </div>
+                      Carbon Reporter
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    <NavLinks mobile onClick={() => setOpen(false)} />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
         </div>
       </header>
 
       <main className="flex-1 p-4 md:p-6">
         <Outlet />
       </main>
+
+      <footer className="border-t px-6 py-3 text-center text-[10px] text-muted-foreground">
+        Acme Corporation · GHG Protocol Corporate Standard · FY2025 · Powered by Databricks
+      </footer>
     </div>
   );
 }

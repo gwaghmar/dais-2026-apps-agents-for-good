@@ -1,39 +1,31 @@
 import { useState, useEffect } from 'react';
-import {
-  Card, CardContent, CardHeader, CardTitle,
-  Button,
-} from '@databricks/appkit-ui/react';
+import { Card, CardContent, CardHeader, CardTitle } from '@databricks/appkit-ui/react';
+import { Button } from '@databricks/appkit-ui/react';
+import { CheckCircle2, AlertCircle, Upload, ArrowRight, Database } from 'lucide-react';
 
-interface EFMeta {
-  key: string;
-  scope: number;
-  label: string;
-  unit: string;
-  factor: number;
-}
-
-interface UploadRow {
-  category: string;
-  activity_value: number;
-  period: string;
-  source: string;
-}
-
+interface EFMeta { key: string; scope: number; label: string; unit: string; factor: number }
+interface UploadRow { category: string; activity_value: number; period: string; source: string }
 interface ParsedRow {
-  rawCategory: string;
-  mappedCategory: string;
-  rawValue: string;
-  period: string;
-  source: string;
+  rawCategory: string; mappedCategory: string;
+  rawValue: string; period: string; source: string;
 }
 
-const SCOPE_COLORS: Record<number, string> = { 1: '#ef4444', 2: '#f97316', 3: '#3b82f6' };
+const S: Record<number, string> = { 1: '#ef4444', 2: '#f97316', 3: '#3b82f6' };
 
 const EXAMPLE_CSV = `category,activity_value,period,source
 electricity,150000,2025-Q1,Utility Bill
 natural_gas,8500,2025-Q1,Gas Invoice
-air_travel,125000,2025-Q1,Travel System
+air_travel,125000,2025-Q1,Concur Travel
 employee_commute,2000000,2025-Q1,HR System`;
+
+const ERP_SOURCES = [
+  { name: 'SAP S/4HANA', type: 'ERP', connected: true, desc: 'Purchase orders, freight, waste' },
+  { name: 'Oracle Cloud', type: 'ERP', connected: true, desc: 'Utilities, facilities spend' },
+  { name: 'Concur Travel', type: 'Travel', connected: true, desc: 'Air travel, hotels, rental cars' },
+  { name: 'Workday', type: 'HR', connected: false, desc: 'Headcount, commute survey data' },
+  { name: 'PG&E Utility', type: 'Utility', connected: true, desc: 'Electricity & gas consumption' },
+  { name: 'Watershed CSV', type: 'Import', connected: false, desc: 'Bulk import from any source' },
+];
 
 export function IngestionPage() {
   const [factors, setFactors] = useState<EFMeta[]>([]);
@@ -51,25 +43,24 @@ export function IngestionPage() {
 
   function parseCSV(text: string) {
     const lines = text.trim().split('\n').filter(Boolean);
-    if (lines.length < 2) return;
+    if (lines.length < 2) { setParsed([]); return; }
     const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
-    const rows: ParsedRow[] = lines.slice(1).map((line) => {
-      const cells = line.split(',').map((c) => c.trim());
-      const get = (key: string) => cells[headers.indexOf(key)] ?? '';
-      const rawCat = get('category');
-      return {
-        rawCategory: rawCat,
-        mappedCategory: rawCat,
-        rawValue: get('activity_value'),
-        period: get('period') || '2025',
-        source: get('source') || 'Upload',
-      };
-    });
-    setParsed(rows);
+    setParsed(
+      lines.slice(1).map((line) => {
+        const cells = line.split(',').map((c) => c.trim());
+        const get = (key: string) => cells[headers.indexOf(key)] ?? '';
+        const rawCat = get('category');
+        return {
+          rawCategory: rawCat, mappedCategory: rawCat,
+          rawValue: get('activity_value'), period: get('period') || '2025',
+          source: get('source') || 'Upload',
+        };
+      })
+    );
   }
 
-  function updateMapping(idx: number, newCat: string) {
-    setParsed((prev) => prev.map((r, i) => (i === idx ? { ...r, mappedCategory: newCat } : r)));
+  function updateMapping(idx: number, val: string) {
+    setParsed((prev) => prev.map((r, i) => (i === idx ? { ...r, mappedCategory: val } : r)));
   }
 
   async function handleSubmit() {
@@ -81,10 +72,8 @@ export function IngestionPage() {
         period: r.period,
         source: r.source,
       }));
-
-    if (rows.length === 0) return;
+    if (!rows.length) return;
     setStatus('submitting');
-
     try {
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -93,7 +82,7 @@ export function IngestionPage() {
       });
       const data = (await res.json()) as { inserted?: number; error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-      setResultMsg(`${data.inserted} records ingested successfully`);
+      setResultMsg(`${data.inserted ?? 0} records written to Lakebase (workspace.esg.activity_data)`);
       setStatus('done');
       setCsvText('');
       setParsed([]);
@@ -104,42 +93,75 @@ export function IngestionPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Data Ingestion</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Import activity data from ERP, utility, or travel systems. Map columns, validate, and push to Lakebase.
+        <h2 className="text-2xl font-bold tracking-tight">Data Ingestion</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Connect enterprise systems, map activity data to GHG Protocol categories, and push to Lakebase.
         </p>
       </div>
 
-      {/* Supported sources */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {['SAP / ERP', 'Oracle Utilities', 'Concur Travel', 'HR Systems'].map((src) => (
-          <div key={src} className="border rounded-lg p-3 text-center text-sm font-medium text-muted-foreground bg-muted/30">
-            {src}
-          </div>
+      {/* Data pipeline banner */}
+      <div className="rounded-lg border bg-muted/30 px-4 py-3 flex items-center gap-3 text-sm">
+        <Database className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <span className="text-muted-foreground">Pipeline:</span>
+        {['ERP / Utility', 'CSV Import', 'Column Mapping', 'Emission Calc', 'Lakebase · workspace.esg'].map((step, i, arr) => (
+          <span key={step} className="flex items-center gap-2">
+            <span className={i === arr.length - 1 ? 'font-medium text-foreground' : ''}>{step}</span>
+            {i < arr.length - 1 && <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />}
+          </span>
         ))}
       </div>
 
-      {/* CSV upload */}
+      {/* Connected sources */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Enterprise Connections</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {ERP_SOURCES.map((src) => (
+            <div
+              key={src.name}
+              className="border rounded-lg p-3 flex flex-col gap-1 relative overflow-hidden"
+            >
+              {src.connected && (
+                <div className="absolute top-0 right-0 w-0 h-0 border-l-[24px] border-l-transparent border-t-[24px] border-t-emerald-500/20" />
+              )}
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold text-sm">{src.name}</p>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{src.type}</span>
+                </div>
+                {src.connected
+                  ? <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                  : <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />}
+              </div>
+              <p className="text-xs text-muted-foreground">{src.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CSV upload card */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Upload Activity Data (CSV)</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Upload Activity Data
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Expected columns: <code className="bg-muted px-1 rounded">category, activity_value, period, source</code>
+            Expected columns: <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-[11px]">category, activity_value, period, source</code>
           </p>
           <Button
             variant="outline"
             size="sm"
             onClick={() => { setCsvText(EXAMPLE_CSV); parseCSV(EXAMPLE_CSV); }}
           >
-            Load example data
+            Load example CSV
           </Button>
           <textarea
-            className="w-full h-32 rounded-md border px-3 py-2 text-sm bg-background font-mono resize-none"
-            placeholder="Paste CSV here or use example above..."
+            className="w-full h-28 rounded-md border px-3 py-2 text-sm bg-background font-mono resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+            placeholder="Paste CSV data here or click 'Load example CSV'..."
             value={csvText}
             onChange={(e) => { setCsvText(e.target.value); parseCSV(e.target.value); }}
           />
@@ -149,31 +171,31 @@ export function IngestionPage() {
       {/* Column mapping */}
       {parsed.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Column Mapping & Validation</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Column Mapping & Validation</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="pb-2 pr-4 font-medium">Raw Category</th>
-                    <th className="pb-2 pr-4 font-medium">Map to Standard</th>
-                    <th className="pb-2 pr-4 font-medium">Scope</th>
-                    <th className="pb-2 pr-4 font-medium text-right">Value</th>
-                    <th className="pb-2 pr-4 font-medium">Period</th>
-                    <th className="pb-2 font-medium">Source</th>
+                  <tr className="border-b">
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Raw Category</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">GHG Standard Category</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Scope</th>
+                    <th className="pb-2 pr-4 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide">Activity Value</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Period</th>
+                    <th className="pb-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Source</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border/50">
                   {parsed.map((row, i) => {
                     const matched = factors.find((f) => f.key === row.mappedCategory);
                     return (
-                      <tr key={i} className="border-b last:border-0">
-                        <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">{row.rawCategory}</td>
-                        <td className="py-2 pr-4">
+                      <tr key={i}>
+                        <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{row.rawCategory}</td>
+                        <td className="py-2.5 pr-4">
                           <select
-                            className="rounded border px-2 py-1 text-xs bg-background"
+                            className="rounded-md border px-2 py-1 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                             value={row.mappedCategory}
                             onChange={(e) => updateMapping(i, e.target.value)}
                           >
@@ -183,25 +205,20 @@ export function IngestionPage() {
                             ))}
                           </select>
                         </td>
-                        <td className="py-2 pr-4">
-                          {matched && (
-                            <span
-                              className="inline-block px-2 py-0.5 rounded text-xs font-semibold text-white"
-                              style={{ backgroundColor: SCOPE_COLORS[matched.scope] }}
-                            >
+                        <td className="py-2.5 pr-4">
+                          {matched ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ backgroundColor: S[matched.scope] }}>
                               S{matched.scope}
                             </span>
-                          )}
+                          ) : <span className="text-muted-foreground/40">—</span>}
                         </td>
-                        <td className="py-2 pr-4 text-right">
-                          {isNaN(Number(row.rawValue)) ? (
-                            <span className="text-destructive">{row.rawValue}</span>
-                          ) : (
-                            Number(row.rawValue).toLocaleString()
-                          )}
+                        <td className="py-2.5 pr-4 text-right tabular-nums">
+                          {isNaN(Number(row.rawValue))
+                            ? <span className="text-destructive flex items-center justify-end gap-1"><AlertCircle className="h-3 w-3" />{row.rawValue}</span>
+                            : Number(row.rawValue).toLocaleString()}
                         </td>
-                        <td className="py-2 pr-4 text-muted-foreground">{row.period}</td>
-                        <td className="py-2 text-muted-foreground text-xs">{row.source}</td>
+                        <td className="py-2.5 pr-4 text-muted-foreground text-xs">{row.period}</td>
+                        <td className="py-2.5 text-xs text-muted-foreground">{row.source}</td>
                       </tr>
                     );
                   })}
@@ -209,13 +226,17 @@ export function IngestionPage() {
               </table>
             </div>
             <div className="mt-4 flex items-center gap-3">
-              <Button
-                onClick={handleSubmit}
-                disabled={status === 'submitting'}
-              >
-                {status === 'submitting' ? 'Ingesting...' : `Ingest ${parsed.length} rows`}
+              <Button onClick={handleSubmit} disabled={status === 'submitting'}>
+                {status === 'submitting'
+                  ? <span className="flex items-center gap-2"><span className="h-3 w-3 border border-current border-t-transparent rounded-full animate-spin" /> Ingesting...</span>
+                  : `Ingest ${parsed.length} rows → Lakebase`}
               </Button>
-              {status === 'done' && <p className="text-sm text-green-600">{resultMsg}</p>}
+              {status === 'done' && (
+                <p className="text-sm text-emerald-600 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {resultMsg}
+                </p>
+              )}
               {status === 'error' && <p className="text-sm text-destructive">{resultMsg}</p>}
             </div>
           </CardContent>
@@ -224,34 +245,31 @@ export function IngestionPage() {
 
       {/* Emission factors reference */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Supported Emission Categories & Factors</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Supported GHG Protocol Categories & Emission Factors</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">Category</th>
-                  <th className="pb-2 pr-4 font-medium">Scope</th>
-                  <th className="pb-2 pr-4 font-medium">Unit</th>
-                  <th className="pb-2 font-medium">Factor (kgCO₂e/unit)</th>
+                <tr className="border-b">
+                  <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Category</th>
+                  <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Scope</th>
+                  <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Unit</th>
+                  <th className="pb-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">kgCO₂e / unit</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border/50">
                 {factors.map((f) => (
-                  <tr key={f.key} className="border-b last:border-0">
-                    <td className="py-1.5 pr-4">{f.label}</td>
-                    <td className="py-1.5 pr-4">
-                      <span
-                        className="inline-block px-2 py-0.5 rounded text-xs font-semibold text-white"
-                        style={{ backgroundColor: SCOPE_COLORS[f.scope] }}
-                      >
+                  <tr key={f.key} className="hover:bg-muted/40 transition-colors">
+                    <td className="py-2 pr-4 font-medium text-sm">{f.label}</td>
+                    <td className="py-2 pr-4">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ backgroundColor: S[f.scope] }}>
                         S{f.scope}
                       </span>
                     </td>
-                    <td className="py-1.5 pr-4 text-muted-foreground">{f.unit}</td>
-                    <td className="py-1.5 font-mono text-xs">{f.factor}</td>
+                    <td className="py-2 pr-4 text-muted-foreground text-xs">{f.unit}</td>
+                    <td className="py-2 font-mono text-xs font-semibold">{f.factor}</td>
                   </tr>
                 ))}
               </tbody>

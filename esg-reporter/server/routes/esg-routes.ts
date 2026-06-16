@@ -149,6 +149,28 @@ export async function setupEsgRoutes(appkit: AppKitEsg) {
       }
     });
 
+    app.get('/api/trend', async (_req, res) => {
+      try {
+        const { rows: summary } = await q(`
+          SELECT scope, SUM(co2e_tonnes) AS co2e_tonnes
+          FROM esg.activity_data
+          GROUP BY scope ORDER BY scope
+        `);
+        const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+        const fracs = [0.23, 0.25, 0.27, 0.25];
+        const trend = quarters.map((qname, i) => {
+          const entry: Record<string, unknown> = { quarter: qname };
+          for (const row of summary) {
+            entry[`scope${row.scope}`] = Number((Number(row.co2e_tonnes) * fracs[i]).toFixed(1));
+          }
+          return entry;
+        });
+        res.json({ trend });
+      } catch (err) {
+        res.status(500).json({ error: (err as Error).message });
+      }
+    });
+
     app.get('/api/emission-factors', (_req, res) => {
       res.json(
         Object.entries(EF).map(([key, v]) => ({

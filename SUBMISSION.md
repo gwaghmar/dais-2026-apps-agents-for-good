@@ -46,11 +46,13 @@ impact, idiomatic Databricks stack use, and clear docs.
 - [x] GitHub repo created + public
 - [x] Concept locked: **ESG Carbon Reporter** (corporate Scope 1/2/3 accounting + CSR report)
 - [x] Lakebase project created + `esg.activity_data` + `esg.companies` tables with seed data
+- [x] **Unity Catalog Delta tables** — `workspace.esg.activity_data` (48 rows, 12 categories × 4 quarters), `workspace.esg.companies`, `workspace.esg.emission_factors` — CDF enabled
+- [x] **UC SQL functions** — `workspace.esg.get_emissions_summary()`, `workspace.esg.get_quarterly_trend()` — attached to Agent Bricks Supervisor Agent
 - [x] AppKit app scaffolded (`--features lakebase,serving`)
 - [x] Agent Bricks Supervisor Agent created + ESG instructions
 - [x] All 4 pages built: Dashboard, Ingestion, AI Assistant, CSR Report
 - [x] Bundle deployed (`databricks bundle deploy`)
-- [ ] App running + smoke tested
+- [x] App running + smoke tested — https://esg-reporter-7474648426999655.aws.databricksapps.com
 - [ ] Demo video recorded
 - [ ] Slides prepared
 - [ ] Final commit + push to GitHub
