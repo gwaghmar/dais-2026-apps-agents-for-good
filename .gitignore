@@ -27,3 +27,6 @@ Thumbs.db
 # Test artifacts
 playwright-report/
 test-results/
+
+# Partial scaffold (failed init attempt)
+community-res-nav/
