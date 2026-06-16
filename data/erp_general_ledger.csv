@@ -1,0 +1,13 @@
+txn_id,posting_date,business_unit,gl_account,gl_account_name,vendor,spend_category,amount_usd,currency,source_system
+GL-1001,2026-01-12,Manufacturing,500100,Purchased Goods - Steel,AcmeSteel Co,purchased_goods_metals,128400.00,USD,SAP
+GL-1002,2026-01-18,Manufacturing,500110,Purchased Goods - Plastics,PolyForm Inc,purchased_goods_plastics,42150.00,USD,SAP
+GL-1003,2026-01-22,Logistics,520300,Freight - Road,HaulRight LLC,freight_road,18900.00,USD,SAP
+GL-1004,2026-02-03,Corporate,610200,Professional Services,Deloitte,professional_services,75000.00,USD,NetSuite
+GL-1005,2026-02-09,Manufacturing,500100,Purchased Goods - Steel,AcmeSteel Co,purchased_goods_metals,98750.00,USD,SAP
+GL-1006,2026-02-15,Retail,530400,Packaging Materials,BoxWorks,purchased_goods_paper,22300.00,USD,NetSuite
+GL-1007,2026-02-27,Logistics,520320,Freight - Air,SkyCargo,freight_air,31200.00,USD,SAP
+GL-1008,2026-03-05,Corporate,640100,Cloud Computing,Databricks,it_services,46000.00,USD,NetSuite
+GL-1009,2026-03-14,Manufacturing,500110,Purchased Goods - Plastics,PolyForm Inc,purchased_goods_plastics,37800.00,USD,SAP
+GL-1010,2026-03-21,Retail,530400,Packaging Materials,BoxWorks,purchased_goods_paper,19850.00,USD,NetSuite
+GL-1011,2026-03-28,Logistics,520300,Freight - Road,HaulRight LLC,freight_road,24100.00,USD,SAP
+GL-1012,2026-03-30,Corporate,610200,Professional Services,KPMG,professional_services,52000.00,USD,NetSuite

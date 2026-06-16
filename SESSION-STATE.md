@@ -1,14 +1,20 @@
 # Session State — Continue Here
 
-> **Purpose:** full handoff so a new session resumes instantly. Last updated: **2026-06-14**.
+> **Purpose:** full handoff so a new session resumes instantly. Last updated: **2026-06-16**.
 > **Project folder:** `C:\Users\govin\databricks-hackathon`
 
 ---
 
 ## TL;DR — where we are
 
-Environment is **100% set up**. GitHub repo is **live with submission scaffold**. The *only* thing
-left before building is **choosing the social-impact concept**. Nothing else blocks us.
+**Concept LOCKED: CarbonLedger** — a Watershed-style ERP→CSR carbon-accounting platform
+(ingest ERP data → clean → compute Scope 1/2/3 → AI CSR reporting), full Databricks stack.
+Repo is rewritten around it: README (5 sections), architecture, methodology, build runbook,
+sample ERP data, medallion pipeline SQL, Agent Bricks spec — all pushed & public.
+
+⏰ **Submission is TONIGHT (Tue June 16, judging 6–9pm).** Remaining work = the actual
+Databricks deploy, which needs the authenticated `hackathon` CLI on Govind's machine
+(the planning/CI container has no Databricks CLI). **Follow `docs/BUILD-RUNBOOK.md`.**
 
 ---
 
@@ -57,29 +63,26 @@ left before building is **choosing the social-impact concept**. Nothing else blo
 - Workspace catalogs available: `workspace` (empty), `samples` (accuweather, bakehouse, healthverity,
   nyctaxi, sec, tpch), `system`.
 
-## ⏳ OPEN DECISION — pick the concept (only blocker)
+## ✅ CONCEPT LOCKED — CarbonLedger (ERP→CSR carbon accounting)
 
-All four use Lakebase synced tables + Agent Bricks + Databricks Apps:
-1. **Community Resource Navigator** (recommended) — conversational agent finds local services
-   (food/shelter/health/aid) with eligibility-aware guidance. Matches official "Community Wellness
-   & Support Navigator" example. Lakebase = instant typeahead over a services directory.
-2. **Accessible City & Travel Agent** — navigate a city with accessibility needs (transit/geo; nyctaxi).
-3. **Climate Resilience Helper** — extreme-weather prep, cooling centers, alerts (samples.accuweather).
-4. **Health Access Navigator** — find affordable/nearby care (samples.healthverity; sensitive framing).
-5. **Govind's / team's own idea** — shape onto the same architecture.
+Watershed-style: ingest ERP/ops exports (SAP/NetSuite/Workday/Concur) → medallion clean →
+Scope 1/2/3 tCO₂e (GHG Protocol) → Lakebase synced reads → Agent Bricks "CSR Analyst" →
+Databricks App dashboard + chat + CSR report draft. Uses the full stack (UC, Delta+CDF,
+Lakeflow, Lakebase, Vector Search, Model Serving, Agent Bricks, Apps).
 
-> README is currently written around concept #1 as a *working draft* — easy to swap.
+What's in the repo now: `data/` (sample ERP exports + emission factors), `pipeline/`
+(bronze→silver→gold SQL), `agent/csr_agent.md`, `docs/` (architecture, methodology, runbook).
 
-## NEXT STEPS (once concept locked)
+## NEXT STEPS — run on Govind's machine (authenticated CLI). See docs/BUILD-RUNBOOK.md
 
-1. Choose/load source dataset into Unity Catalog (seed a Delta table or use a `samples.*` table).
-2. **Lakebase:** `databricks postgres create-project <id> --json '{"spec":{"display_name":"..."}}' -p hackathon`
-   → get branch + database names.
-3. **Synced table:** `databricks postgres create-synced-table ...` (continuous; source needs CDF enabled).
-4. **Scaffold app:** `databricks apps init --name <name> --features lakebase --set lakebase.postgres.branch=<B> --set lakebase.postgres.database=<D> --run none -p hackathon`
-5. Build React UI (use `databricks-app-design` skill) + Express routes querying Lakebase.
-6. **Agent Bricks:** use `databricks-agent-bricks` skill to add the agent.
-7. Deploy (`databricks apps deploy`), test, fill README sections, record demo + slides.
+1. `databricks fs cp data/ dbfs:/Volumes/carbon/csr/landing/ --recursive -p hackathon`
+2. Run `pipeline/01_bronze_ingest.sql` → `02_silver_normalize.sql` → `03_gold_emissions.sql`.
+   Verify 3 scopes in `carbon.csr.gold_emissions`.
+3. **Lakebase:** create project, then continuous synced table from `gold_emissions_summary`.
+4. **App:** `databricks apps init --name carbonledger --features lakebase ...` then build UI.
+5. **Agent Bricks:** wire Lakebase tools + Vector Search per `agent/csr_agent.md`.
+6. `databricks apps deploy carbonledger -p hackathon`; test the 3 demo questions.
+7. Record demo + slides. **Confirm submission portal + exact cutoff (MLH / Drive guide).**
 
 ## Resume commands (sanity check on a new session)
 ```bash

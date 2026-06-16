@@ -1,47 +1,67 @@
-# Architecture
+# Architecture — CarbonLedger
 
 ## Data flow
 
 ```
-┌─────────────────────────┐
-│ Unity Catalog (Delta)   │   Source of truth: service directory table
-│  services_directory     │   (name, category, city, eligibility, contact, geo)
-└───────────┬─────────────┘
-            │  Lakebase synced table (continuous, CDF-backed)
-            ▼
-┌─────────────────────────┐
-│ Lakebase (Postgres)     │   Sub-10ms reads: typeahead, geo/eligibility lookups
-│  public.services        │
-└───────────┬─────────────┘
-            │  appkit.lakebase.query()  (Express routes)
-            ▼
-┌─────────────────────────┐        ┌──────────────────────┐
-│ Databricks App (AppKit) │◄──────►│ Agent Bricks agent   │
-│  React UI + server      │        │  NL → structured plan │
-└───────────┬─────────────┘        └──────────────────────┘
-            │
-            ▼
-          User
+┌──────────────────────────────────────────────┐
+│ ERP / operational source systems             │  SAP · NetSuite · Workday · Concur
+│ exports: GL spend, utility kWh, fuel, travel │
+└───────────────┬──────────────────────────────┘
+                │  Lakeflow Connect / Auto Loader / COPY INTO
+                ▼
+┌──────────────────────────────────────────────┐
+│ Unity Catalog · carbon.csr  (Delta + CDF)    │
+│  bronze_*  raw, source-faithful              │
+│  silver_activity  normalized activity model  │
+│  gold_emissions / _summary  Scope 1/2/3 tCO2e│
+└───────────────┬──────────────────────────────┘
+                │  continuous synced table (CDF-backed)
+                ▼
+┌──────────────────────────────────────────────┐        ┌─────────────────────────────┐
+│ Lakebase (Postgres)                          │        │ Vector Search index         │
+│  public.emissions_summary  (sub-10ms reads)  │        │  GHG Protocol + factor docs │
+└───────────────┬──────────────────────────────┘        └──────────────┬──────────────┘
+                │                                                       │
+                ▼                                                       ▼
+┌──────────────────────────────────────────────┐        ┌─────────────────────────────┐
+│ Databricks App (AppKit / React + Express)    │◄──────►│ Agent Bricks "CSR Analyst"  │
+│  dashboard · agent chat · CSR report export  │        │  Model Serving + tools      │
+└───────────────┬──────────────────────────────┘        └─────────────────────────────┘
+                ▼
+        Sustainability / finance team
 ```
+
+## Medallion layers
+
+| Layer | Table(s) | Purpose |
+|---|---|---|
+| Bronze | `bronze_general_ledger`, `bronze_utility_bills`, `bronze_fuel_fleet`, `bronze_business_travel`, `emission_factors` | Raw, 1:1 with ERP exports; source fidelity + CDF |
+| Silver | `silver_activity` | One normalized activity model across all sources (`scope`, `factor_key`, `activity_amount`, `activity_unit`) |
+| Gold | `gold_emissions`, `gold_emissions_summary`, `v_emission_hotspots` | Scope 1/2/3 tCO₂e fact + aggregates the app/agent read |
 
 ## Key decisions
 
 | Decision | Choice | Why |
 |---|---|---|
-| Data access pattern | **Lakebase synced tables** (not analytics warehouse) | Sub-10ms typeahead / lookups for an operational, conversational app |
-| App framework | **AppKit** (TypeScript/React) | Type-safe, first-class Lakebase + serving plugins, idiomatic Databricks Apps |
-| Agent | **Agent Bricks** | Required by theme; turns free-text need into structured queries + guidance |
-| Sync mode | **Continuous** (Change Data Feed) | Directory stays current automatically from the source of truth |
+| Ingestion | Land ERP exports to UC Volume → COPY INTO (Lakeflow in prod) | Mirrors real ERP extract feeds; governed in Unity Catalog |
+| Modeling | Medallion (bronze→silver→gold) | Auditability: report figure traces back to a single ERP row |
+| Scope 3 | Spend-based EEIO (Cat 1/4) + distance-based (Cat 6) | Standard early-stage Scope 3 approach; honest about estimation |
+| Operational store | **Lakebase synced table** | Sub-10ms dashboard + agent tool reads, not warehouse latency |
+| Agent | **Agent Bricks** + Vector Search grounding | Required; cites methodology instead of guessing |
+| Sync mode | Continuous (CDF) | New ERP data updates the footprint automatically |
+| App framework | AppKit (TypeScript/React) | First-class Lakebase + serving plugins; idiomatic Databricks Apps |
 
-## Why Lakebase synced tables (not analytics)
+## MVP scope vs. stretch (it's a one-night build)
 
-The app is conversational and operational: a user types a need, the agent must look up matching
-services and return them instantly. That's typeahead + point lookups → **Lakebase synced tables**
-(sub-second), not warehouse queries (multi-second). See the `databricks-apps` skill Data Access
-Decision Gate.
+**MVP (demoable tonight):** the medallion pipeline + Scope 1/2/3 gold table, Lakebase
+sync of the summary, Agent Bricks Q&A grounded on it, a Databricks App with a dashboard +
+chat + a "draft CSR section" button.
+
+**Stretch:** market-based Scope 2, more Scope 3 categories, supplier-specific factors,
+Lakeflow Connect live ERP connectors, full multi-page CSRD report export, Agent Evaluation
+dashboard, target-setting / scenario modeling.
 
 ## Open items
-
-- Final source dataset for the service directory (Marketplace social dataset vs. seeded sample).
-- Agent Bricks agent definition (tools, system prompt, grounding tables).
-- Eligibility model: rules-based vs. agent-reasoned.
+- Final UC catalog name if `carbon` create-catalog rights are unavailable (fallback: `workspace`).
+- Agent Bricks tool wiring (Lakebase query functions) — see `agent/csr_agent.md`.
+- Swap illustrative emission factors for EPA/eGRID/USEEIO production values.

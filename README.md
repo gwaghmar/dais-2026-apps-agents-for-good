@@ -1,78 +1,101 @@
-# Community Resource Navigator
+# CarbonLedger — ERP-to-CSR emissions platform
 
-> **DAIS 2026 — Apps & Agents for Good Hackathon** · Built on Databricks **Lakebase + Agent Bricks + Databricks Apps**
+> **DAIS 2026 — Apps & Agents for Good Hackathon** · Built on Databricks **Lakebase + Agent Bricks + Databricks Apps** (+ Unity Catalog, Lakeflow, Vector Search, Model Serving)
 
-An agentic data app that helps people in crisis find and navigate local social services —
-food assistance, shelter, health clinics, financial aid — by describing their situation in
-plain language and getting back relevant, eligibility-aware next steps in milliseconds.
-
-> ⚠️ **Working concept — not yet locked.** This README is the submission scaffold. The social-impact
-> idea below is a strong default for the theme; swap freely. The architecture (Lakebase synced
-> tables + an Agent Bricks agent + a Databricks App) stays the same regardless of the idea.
+An agentic data app that turns the messy financial + operational data already sitting
+in a company's **ERP systems** (SAP, NetSuite, Workday, Concur) into a governed
+**Scope 1 / 2 / 3 carbon footprint** and an AI-drafted **CSR / sustainability report** —
+a Watershed-style workflow built end-to-end on Databricks.
 
 ---
 
 ## 1. Problem statement & solution approach
 
-**Problem.** When someone hits a crisis — job loss, eviction risk, food insecurity — the help
-they need usually exists, but it's scattered across hundreds of agencies with confusing
-eligibility rules. People give up before they find it.
+**Problem.** Corporate climate disclosure (CSRD, SEC climate rule, CDP) is now mandatory
+for thousands of companies, but the data needed to compute emissions is scattered across
+ERP, utility, fleet, and travel systems in incompatible formats. Most teams stitch it
+together in spreadsheets — slow, error-prone, unauditable, and impossible to keep current.
 
-**Solution.** A single conversational front door. The user describes their situation
-("I lost my job in Oakland and need food and help with rent"). An **Agent Bricks** agent
-interprets the need, queries a continuously-synced directory of services in **Lakebase**
-(sub-10ms lookups), and returns a ranked, eligibility-aware action plan — all in a
-**Databricks App**.
+**Solution.** CarbonLedger ingests ERP/operational exports into Unity Catalog, normalizes
+them through a medallion pipeline, applies GHG-Protocol emission factors to compute
+**Scope 1/2/3 in metric tons CO₂e**, serves the results from **Lakebase** for instant reads,
+and puts an **Agent Bricks** "CSR Analyst" in front of it all inside a **Databricks App** —
+so a sustainability lead can ask *"what's our biggest Scope 3 source this quarter and how do
+we cut it?"* and get a grounded, citable answer plus a report-ready paragraph.
 
 ## 2. Technical implementation
 
 ```
-Unity Catalog (Delta: services directory)
-        │  continuous sync (CDF)
+ERP / ops exports (SAP, NetSuite, Workday, Concur)
+        │  Lakeflow / Auto Loader / COPY INTO
+        ▼
+Unity Catalog — medallion (Delta + CDF)
+  bronze (raw) → silver (normalized activity) → gold (Scope 1/2/3 tCO2e)
+        │  continuous synced table
         ▼
    Lakebase (Postgres)  ──sub-10ms reads──┐
         ▲                                 │
-   Agent Bricks agent ◄── natural language │
+  Agent Bricks "CSR Analyst" ◄── NL ──────┤  (grounded by Vector Search over
+   (Model Serving + tools)                │   GHG Protocol + factor metadata)
         │                                 ▼
-        └────────────  Databricks App (AppKit / React) ── user
+        └──────────  Databricks App (AppKit / React) ── sustainability team
 ```
 
-- **Lakebase synced tables** — the service directory is synced from a UC Delta table into
-  Lakebase Postgres for sub-10ms typeahead and geo/eligibility lookups.
-- **Agent Bricks** — an agent that turns free-text need into structured queries + a guided plan.
-- **Databricks Apps (AppKit)** — TypeScript/React UI, deployed serverless on Databricks.
-
-> See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the detailed data flow and decisions.
+Databricks surface area used: **Unity Catalog** (governance/lineage), **Delta + Change
+Data Feed**, **Lakeflow/medallion pipeline**, **Lakebase synced table** (operational reads),
+**Mosaic AI Vector Search** (methodology grounding), **Agent Bricks** (the agent),
+**Model Serving / Foundation Model APIs** (reasoning + report drafting), **Mosaic AI Agent
+Evaluation** (quality), **Databricks Apps** (UI). See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+and [`docs/EMISSIONS-METHODOLOGY.md`](docs/EMISSIONS-METHODOLOGY.md).
 
 ## 3. How it benefits users
 
-People in need get from "I'm in trouble" to "here are 3 places that can help you today, and
-you qualify" in one conversation — no agency-hopping, no eligibility guesswork.
+- **Sustainability / finance teams** get an auditable footprint in minutes instead of weeks —
+  every number traces report → gold → silver → the original ERP row.
+- **Leadership** gets hotspots and reduction levers, not just a total.
+- **Society** benefits when accurate, low-friction carbon accounting makes corporate
+  decarbonization measurable and therefore actionable — the "for good" of the theme.
 
 ## 4. Accessibility & ethical considerations
 
-- Plain-language input/output; no jargon; designed for low digital literacy.
-- No collection of PII beyond what's needed; no storage of sensitive personal situations.
-- Eligibility guidance is informational, not a determination — always links to the official source.
-- _(To expand as we build.)_
+- **No greenwashing:** the agent always states scope/category, labels spend-based Scope 3 as
+  an *estimate*, and flags missing data instead of silently filling gaps.
+- **Traceability:** every figure is drillable back to source rows (anti-fraud, audit-ready).
+- **Plain language** agent output; dashboard usable without carbon-accounting expertise.
+- Emission factors in this prototype are **illustrative**; production sources documented.
 
 ## 5. Deployment & sustainability plan
 
-- Runs serverless on Databricks Apps; Lakebase scales to zero when idle (low cost).
-- Service directory refreshes automatically via continuous sync from the source of truth.
-- _(To expand as we build.)_
+- Serverless on **Databricks Apps**; **Lakebase** scales to zero when idle (low running cost).
+- New ERP exports flow through **continuous sync** — the footprint stays current automatically.
+- Factor tables are versioned in Unity Catalog (swap illustrative → EPA/eGRID/USEEIO without
+  touching pipeline logic).
+- Extensible to new Scope 3 categories by adding rows to `silver_activity` + `emission_factors`.
 
 ---
 
 ## Setup & usage
 
-> Filled in as the app is built. High level:
+> ⚠️ Requires a Databricks workspace with an authenticated CLI profile, Lakebase + Apps enabled,
+> and the `databricks aitools` skills. Full step-by-step in [`docs/BUILD-RUNBOOK.md`](docs/BUILD-RUNBOOK.md).
 
 ```bash
-# Prereqs: Databricks CLI 1.0+, authenticated profile, Node 18+
-databricks aitools version          # skills installed
-# scaffold, sync, run — see docs/ as steps are completed
+# 0. Prereqs
+databricks --version            # 1.0+
+databricks auth profiles        # your authenticated profile
+databricks aitools version
+
+# 1. Land sample ERP exports + build the pipeline (bronze → silver → gold)
+databricks fs cp data/ dbfs:/Volumes/carbon/csr/landing/ --recursive -p <profile>
+#   then run pipeline/01_bronze_ingest.sql, 02_silver_normalize.sql, 03_gold_emissions.sql
+
+# 2. Lakebase project + continuous synced table from gold_emissions_summary
+# 3. Scaffold the Databricks App (--features lakebase) and add the Agent Bricks agent
+# 4. databricks apps deploy
 ```
+
+Repo layout: [`data/`](data) sample ERP exports + factors · [`pipeline/`](pipeline) medallion SQL ·
+[`agent/`](agent) Agent Bricks spec · [`docs/`](docs) architecture, methodology, runbook.
 
 ## Team
 

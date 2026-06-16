@@ -1,0 +1,8 @@
+trip_id,travel_date,business_unit,employee_dept,mode,distance_km,haul,amount_usd,source_system
+BT-4001,2026-01-10,Corporate,Sales,air,3900,long_haul,640.00,Concur
+BT-4002,2026-01-25,Corporate,Sales,air,1100,short_haul,280.00,Concur
+BT-4003,2026-02-08,Manufacturing,Engineering,air,5200,long_haul,820.00,Concur
+BT-4004,2026-02-19,Corporate,Exec,air,8800,long_haul,2100.00,Concur
+BT-4005,2026-03-04,Logistics,Ops,rail,650,na,90.00,Concur
+BT-4006,2026-03-17,Corporate,Sales,air,1450,short_haul,310.00,Concur
+BT-4007,2026-03-29,Manufacturing,Engineering,car,420,na,180.00,Concur

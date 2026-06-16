@@ -1,0 +1,17 @@
+factor_key,scope,method,basis_unit,kgco2e_per_unit,source,notes
+diesel,1,fuel_combustion,gallon,10.21,EPA GHG Emission Factors Hub,Mobile/stationary diesel combustion - ILLUSTRATIVE value; replace with current EPA factor
+natural_gas,1,fuel_combustion,therm,5.31,EPA GHG Emission Factors Hub,Stationary natural gas combustion - ILLUSTRATIVE
+propane,1,fuel_combustion,gallon,5.74,EPA GHG Emission Factors Hub,ILLUSTRATIVE
+CAMX,2,grid_location_based,kwh,0.228,EPA eGRID,California (WECC CAMX) grid avg - ILLUSTRATIVE; use latest eGRID subregion factor
+RFCE,2,grid_location_based,kwh,0.331,EPA eGRID,RFC East grid avg - ILLUSTRATIVE
+purchased_goods_metals,3,spend_based,usd,0.95,USEEIO/EXIOBASE,Scope 3 Cat 1 spend-based EEIO factor - ILLUSTRATIVE kgCO2e/USD
+purchased_goods_plastics,3,spend_based,usd,0.62,USEEIO/EXIOBASE,Scope 3 Cat 1 - ILLUSTRATIVE
+purchased_goods_paper,3,spend_based,usd,0.55,USEEIO/EXIOBASE,Scope 3 Cat 1 - ILLUSTRATIVE
+freight_road,3,spend_based,usd,0.41,USEEIO/EXIOBASE,Scope 3 Cat 4 upstream transport - ILLUSTRATIVE
+freight_air,3,spend_based,usd,1.05,USEEIO/EXIOBASE,Scope 3 Cat 4 - ILLUSTRATIVE
+professional_services,3,spend_based,usd,0.12,USEEIO/EXIOBASE,Scope 3 Cat 1 services - ILLUSTRATIVE
+it_services,3,spend_based,usd,0.18,USEEIO/EXIOBASE,Scope 3 Cat 1 cloud/IT - ILLUSTRATIVE
+air_long_haul,3,distance_based,passenger_km,0.150,DEFRA/GHG Protocol,Scope 3 Cat 6 business travel - ILLUSTRATIVE
+air_short_haul,3,distance_based,passenger_km,0.246,DEFRA/GHG Protocol,Scope 3 Cat 6 - ILLUSTRATIVE
+rail,3,distance_based,passenger_km,0.035,DEFRA/GHG Protocol,Scope 3 Cat 6 - ILLUSTRATIVE
+car,3,distance_based,passenger_km,0.170,DEFRA/GHG Protocol,Scope 3 Cat 6 - ILLUSTRATIVE

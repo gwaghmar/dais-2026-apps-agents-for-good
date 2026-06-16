@@ -1,0 +1,8 @@
+bill_id,period_start,period_end,facility,business_unit,grid_region,energy_type,kwh,amount_usd,source_system
+UB-2001,2026-01-01,2026-01-31,Plant-A,Manufacturing,CAMX,electricity,412000,61800.00,Workday
+UB-2002,2026-02-01,2026-02-28,Plant-A,Manufacturing,CAMX,electricity,398500,59775.00,Workday
+UB-2003,2026-03-01,2026-03-31,Plant-A,Manufacturing,CAMX,electricity,421300,63195.00,Workday
+UB-2004,2026-01-01,2026-01-31,DC-East,Logistics,RFCE,electricity,156000,21840.00,Workday
+UB-2005,2026-02-01,2026-02-28,DC-East,Logistics,RFCE,electricity,149200,20888.00,Workday
+UB-2006,2026-03-01,2026-03-31,DC-East,Logistics,RFCE,electricity,161400,22596.00,Workday
+UB-2007,2026-01-01,2026-03-31,HQ,Corporate,CAMX,electricity,88000,13200.00,Workday

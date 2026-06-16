@@ -1,0 +1,7 @@
+record_id,posting_date,business_unit,asset,fuel_type,quantity,unit,amount_usd,source_system
+FF-3001,2026-01-15,Logistics,Truck-Fleet,diesel,8200,gallon,32800.00,SAP
+FF-3002,2026-02-15,Logistics,Truck-Fleet,diesel,7950,gallon,31800.00,SAP
+FF-3003,2026-03-15,Logistics,Truck-Fleet,diesel,8600,gallon,34400.00,SAP
+FF-3004,2026-01-20,Manufacturing,Backup-Generator,natural_gas,4200,therm,3360.00,SAP
+FF-3005,2026-02-20,Manufacturing,Backup-Generator,natural_gas,3900,therm,3120.00,SAP
+FF-3006,2026-03-20,Manufacturing,Forklift-Fleet,propane,1850,gallon,5550.00,SAP
