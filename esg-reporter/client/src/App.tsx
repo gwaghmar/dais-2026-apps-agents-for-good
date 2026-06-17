@@ -8,17 +8,17 @@ import {
   Button,
   useIsMobile,
 } from '@databricks/appkit-ui/react';
-import { Menu, BarChart3, Upload, MessageSquare, FileText } from 'lucide-react';
-import { DashboardPage } from './pages/esg/DashboardPage';
-import { IngestionPage } from './pages/esg/IngestionPage';
-import { AssistantPage } from './pages/esg/AssistantPage';
-import { ReportPage } from './pages/esg/ReportPage';
+import { Menu, Search, Bookmark, BarChart2, Bot } from 'lucide-react';
+import { SearchPage } from './pages/referral/SearchPage';
+import { ShortlistPage } from './pages/referral/ShortlistPage';
+import { OverviewPage } from './pages/referral/OverviewPage';
+import { AIPage } from './pages/referral/AIPage';
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: BarChart3, end: true },
-  { to: '/ingest', label: 'Data Ingestion', icon: Upload, end: false },
-  { to: '/assistant', label: 'ESG Assistant', icon: MessageSquare, end: false },
-  { to: '/report', label: 'CSR Report', icon: FileText, end: false },
+  { to: '/', label: 'Find Facilities', icon: Search, end: true },
+  { to: '/shortlist', label: 'Shortlist', icon: Bookmark, end: false },
+  { to: '/overview', label: 'Dataset Overview', icon: BarChart2, end: false },
+  { to: '/ai', label: 'AI Copilot', icon: Bot, end: false },
 ];
 
 const navCls = ({ isActive }: { isActive: boolean }) =>
@@ -58,12 +58,12 @@ function Layout() {
         <div className="flex h-14 items-center gap-4 px-4 md:px-6">
           {/* Logo */}
           <div className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="h-7 w-7 rounded-md bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center shadow-sm">
-              <span className="text-white text-[10px] font-black tracking-tight">ESG</span>
+            <div className="h-7 w-7 rounded-md bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-sm">
+              <span className="text-white text-[9px] font-black tracking-tight">RC</span>
             </div>
             <div className="flex flex-col leading-none">
-              <span className="font-bold text-sm tracking-tight">Carbon Reporter</span>
-              <span className="text-[9px] text-muted-foreground uppercase tracking-widest">by Databricks</span>
+              <span className="font-bold text-sm tracking-tight">Referral Copilot</span>
+              <span className="text-[9px] text-muted-foreground uppercase tracking-widest">Virtue Foundation · India</span>
             </div>
           </div>
 
@@ -75,12 +75,12 @@ function Layout() {
           {/* Right side */}
           <div className="ml-auto flex items-center gap-3">
             <div className="hidden md:flex items-center gap-1.5 text-[10px] text-muted-foreground border rounded-full px-2.5 py-1 bg-muted/30">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+              <span>10,000 facilities</span>
+              <span className="text-muted-foreground/50">·</span>
               <span>Lakebase</span>
               <span className="text-muted-foreground/50">·</span>
               <span>Agent Bricks</span>
-              <span className="text-muted-foreground/50">·</span>
-              <span>Databricks Apps</span>
             </div>
             {/* Mobile hamburger */}
             <div className="md:hidden">
@@ -92,10 +92,10 @@ function Layout() {
                 <SheetContent side="left" className="w-64">
                   <SheetHeader>
                     <SheetTitle className="flex items-center gap-2 text-sm">
-                      <div className="h-5 w-5 rounded bg-emerald-600 flex items-center justify-center">
-                        <span className="text-white text-[8px] font-black">ESG</span>
+                      <div className="h-5 w-5 rounded bg-blue-600 flex items-center justify-center">
+                        <span className="text-white text-[8px] font-black">RC</span>
                       </div>
-                      Carbon Reporter
+                      Referral Copilot
                     </SheetTitle>
                   </SheetHeader>
                   <div className="mt-4">
@@ -108,12 +108,12 @@ function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1">
         <Outlet />
       </main>
 
       <footer className="border-t px-6 py-3 text-center text-[10px] text-muted-foreground">
-        Acme Corporation · GHG Protocol Corporate Standard · FY2025 · Powered by Databricks
+        Virtue Foundation Dataset · DAIS 2026 Hackathon · Track 3: Referral Copilot · Powered by Databricks
       </footer>
     </div>
   );
@@ -123,10 +123,10 @@ const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: '/', element: <DashboardPage /> },
-      { path: '/ingest', element: <IngestionPage /> },
-      { path: '/assistant', element: <AssistantPage /> },
-      { path: '/report', element: <ReportPage /> },
+      { path: '/', element: <SearchPage /> },
+      { path: '/shortlist', element: <ShortlistPage /> },
+      { path: '/overview', element: <OverviewPage /> },
+      { path: '/ai', element: <AIPage /> },
     ],
   },
 ]);

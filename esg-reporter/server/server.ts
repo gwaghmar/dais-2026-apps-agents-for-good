@@ -1,5 +1,5 @@
 import { createApp, lakebase, server, serving } from '@databricks/appkit';
-import { setupEsgRoutes } from './routes/esg-routes';
+import { setupFacilityRoutes } from './routes/facility-routes';
 
 createApp({
   plugins: [
@@ -8,6 +8,6 @@ createApp({
     serving(),
   ],
   async onPluginsReady(appkit) {
-    await setupEsgRoutes(appkit);
+    await setupFacilityRoutes(appkit);
   },
 }).catch(console.error);

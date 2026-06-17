@@ -8,37 +8,35 @@ let consoleErrors: string[] = [];
 let pageErrors: string[] = [];
 let failedRequests: string[] = [];
 
-test('smoke test - app loads and displays dashboard', async ({ page }) => {
+test('smoke test - app loads and shows Referral Copilot', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('Carbon Reporter')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'GHG Emissions Dashboard' })).toBeVisible();
-  await expect(page.getByText('Total Emissions')).toBeVisible();
+  await expect(page.getByText('Referral Copilot')).toBeVisible();
+  await expect(page.getByText('Find Facilities')).toBeVisible();
 });
 
 test('smoke test - navigation links are visible', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Data Ingestion' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'ESG Assistant' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'CSR Report' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Find Facilities' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Shortlist' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Dataset Overview' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'AI Copilot' })).toBeVisible();
 });
 
-test('smoke test - ingestion page loads', async ({ page }) => {
-  await page.goto('/ingest');
-  await expect(page.getByRole('heading', { name: 'Data Ingestion' })).toBeVisible();
-  await expect(page.getByText('Upload Activity Data')).toBeVisible();
+test('smoke test - search page has inputs', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByPlaceholder('Care need (e.g. Dialysis, Oncology, ICU...)')).toBeVisible();
+  await expect(page.getByPlaceholder('Location (city or state)')).toBeVisible();
 });
 
-test('smoke test - assistant page loads', async ({ page }) => {
-  await page.goto('/assistant');
-  await expect(page.getByRole('heading', { name: 'ESG AI Assistant' })).toBeVisible();
-  await expect(page.getByText('ESG Assistant')).toBeVisible();
+test('smoke test - shortlist page loads', async ({ page }) => {
+  await page.goto('/shortlist');
+  await expect(page.getByRole('heading', { name: 'Shortlist' })).toBeVisible();
 });
 
-test('smoke test - report page loads', async ({ page }) => {
-  await page.goto('/report');
-  await expect(page.getByRole('heading', { name: 'CSR Report' })).toBeVisible();
-  await expect(page.getByText('GHG Inventory')).toBeVisible();
+test('smoke test - AI copilot page loads', async ({ page }) => {
+  await page.goto('/ai');
+  await expect(page.getByText('AI Copilot')).toBeVisible();
+  await expect(page.getByPlaceholder('Ask about facilities, care needs, locations…')).toBeVisible();
 });
 
 test.beforeEach(async ({ page }) => {
